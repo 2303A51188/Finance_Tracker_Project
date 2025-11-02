@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Finance Tracker - India</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        /* --- Feature: Theme Variables (CSS Refactor) --- */
+        :root {
+            --bg-gradient: linear-gradient(135deg, #ff9933 0%, #138808 50%, #000080 100%);
+            --card-bg: white;
+            --text-color: #333;
+            --text-color-light: #555;
+            --header-text: white;
+            --green-accent: #138808;
+            --green-accent-light: #4caf50;
+            --red-accent: #f44336;
+            --blue-accent: #000080;
+            --orange-accent: #ff9933;
+            --border-color: #e0e0e0;
+            --list-item-bg: #f8f9fa;
+            --tab-bg: #f1f1f1;
+            --tab-active-bg: white;
+            --tab-active-border: #ff9933;
+        }
+
+        body.dark {
+            --bg-gradient: linear-gradient(135deg, #4d2e00 0%, #052902 50%, #00001a 100%);
+            --card-bg: #2d2d2d;
+            --text-color: #f1f1f1;
+            --text-color-light: #aaa;
+            --header-text: white;
+            --green-accent: #33cc33;
+            --green-accent-light: #81c784;
+            --red-accent: #ff5252;
+            --blue-accent: #5353ff;
+            --orange-accent: #ffb74d;
+            --border-color: #444;
+            --list-item-bg: #3a3a3a;
+            --tab-bg: #222;
+            --tab-active-bg: #2d2d2d;
+            --tab-active-border: #ffb74d;
+        }
+        /* --- End Theme Variables --- */
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-color);
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* --- Header/Nav Styling --- */
+        .header {
+            text-align: center;
+            color: var(--header-text);
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-content { text-align: center; flex-grow: 1; }
+        .header h1 { font-size: 2.5rem; margin-bottom: 5px; }
+        
+        .user-actions { display: flex; gap: 10px; }
+        .action-btn {
+            padding: 8px 15px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-size: 1.1rem;
+        }
+        .action-btn:hover { background: rgba(255, 255, 255, 0.4); }
+
+        /* --- View Management --- */
+        .view { display: none; }
+        .view.active { display: block; }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+            transition: background 0.3s, color 0.3s;
+        }
+        
+        /* --- Login/Signup Form --- */
+        #auth-view {
+            max-width: 400px;
+            margin: 80px auto;
+            text-align: center;
+        }
+        .auth-switch { margin-top: 15px; font-size: 0.9rem; color: var(--text-color-light); }
+        .auth-switch a { color: var(--orange-accent); text-decoration: none; cursor: pointer; font-weight: 600; }
+        
+        /* --- Profile Card --- */
+        #profile-view { max-width: 600px; margin: 80px auto; }
+        #profile-view .profile-info p { margin-bottom: 10px; font-size: 1.1rem; }
+        #profile-view .profile-info span { font-weight: 600; color: var(--green-accent); }
+        #profile-view h2 { color: var(--green-accent); }
+        
+        /* --- Main Dashboard --- */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .card h2 { margin-bottom: 20px; color: var(--green-accent); font-size: 1.5rem; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: var(--text-color-light); }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            background: var(--card-bg);
+            color: var(--text-color);
+        }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--orange-accent); }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, var(--orange-accent) 0%, var(--green-accent) 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .btn:active { transform: translateY(0); }
+        .btn.clear-btn { background: var(--red-accent); margin-top: 10px; }
+        .btn.export-btn { background: var(--blue-accent); margin-top: 10px; }
+        .btn.back-to-dashboard { background: var(--red-accent); width: auto; padding: 10px 20px; margin-top: 15px; }
+
+        /* --- Feature: Summary Cards (Income/Balance) --- */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .summary-card {
+            background: linear-gradient(135deg, var(--orange-accent) 0%, var(--green-accent) 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        }
+        /* Specific gradient for Income card */
+        .summary-card.income {
+             background: linear-gradient(135deg, var(--green-accent-light) 0%, var(--green-accent) 100%);
+        }
+        /* Specific gradient for Expense card */
+        .summary-card.expense {
+             background: linear-gradient(135deg, #ffb74d 0%, var(--orange-accent) 100%);
+        }
+        .summary-card.balance {
+             background: linear-gradient(135deg, #4da6ff 0%, var(--blue-accent) 100%);
+        }
+        .summary-card.balance.negative {
+            background: linear-gradient(135deg, #ff6b6b 0%, var(--red-accent) 100%);
+        }
+        .summary-card h3 { font-size: 1.2rem; margin-bottom: 10px; }
+        .summary-card .amount { font-size: 2.2rem; font-weight: bold; }
+
+        /* --- Feature: Tabbed Interface --- */
+        .tab-container {
+            display: flex;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: var(--tab-bg);
+            border: none;
+            border-radius: 8px 8px 0 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-color-light);
+            transition: background 0.3s, color 0.3s;
+        }
+        .tab.active {
+            background: var(--tab-active-bg);
+            color: var(--text-color);
+            border-bottom: 3px solid var(--tab-active-border);
+            margin-bottom: -2px; /* Align with border */
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .list-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .list-actions .btn {
+             width: 100%;
+        }
+
+        /* --- List Styling --- */
+        .filter-sort-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: var(--tab-bg);
+            border-radius: 10px;
+        }
+        .filter-sort-bar label {
+             margin-right: 5px;
+        }
+        .filter-sort-bar select {
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 0.95rem;
+            background: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .expense-list { max-height: 400px; overflow-y: auto; }
+        .expense-item {
+            background: var(--list-item-bg);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid var(--orange-accent);
+            transition: background 0.3s;
+        }
+        .income-item {
+             border-left: 4px solid var(--green-accent);
+        }
+        
+        .expense-amount { font-size: 1.3rem; font-weight: bold; color: var(--red-accent); margin-right: 15px; }
+        .income-amount { font-size: 1.3rem; font-weight: bold; color: var(--green-accent); margin-right: 15px; }
+
+        /* Category Badges */
+        .category-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-left: 10px;
+            color: #333; /* Badges look better with dark text */
+        }
+        .category-food { background: #fff3e0; }
+        .category-transport { background: #e3f2fd; }
+        .category-entertainment { background: #f3e5f5; }
+        .category-utilities { background: #e8f5e9; }
+        .category-shopping { background: #fce4ec; }
+        .category-health { background: #ffebee; }
+        .category-education { background: #e1f5fe; }
+        .category-rent { background: #fff9c4; }
+        .category-other { background: #f5f5f5; }
+        /* Income categories */
+        .category-salary { background: #c8e6c9; }
+        .category-freelance { background: #b2ebf2; }
+        .category-bonus { background: #fff59d; }
+        
+        /* Responsive Design */
+        @media (max-width: 900px) {
+            .main-grid { grid-template-columns: 1fr; }
+            .list-actions { flex-direction: column; }
+        }
+        @media (max-width: 600px) {
+             .filter-sort-bar { flex-direction: column; align-items: stretch; }
+             .filter-sort-bar select { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <h1>💰 Finance Tracker | वित्त ट्रैकर</h1>
+                <p>Track your Income and Expenses</p>
+            </div>
+            
+            <div class="user-actions" id="userActions">
+                <button class="action-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Theme">
+                    <i class="fas fa-sun"></i>
+                </button>
+                </div>
+        </div>
+        
+        <div id="auth-view" class="view active card">
+             <h2 id="authTitle">लॉग इन करें | Log In</h2>
+             <form id="authForm">
+                 <div class="form-group"><label for="auth-username">यूजरनेम | Username</label><input type="text" id="auth-username" placeholder="Enter your username" required></div>
+                 <div class="form-group" id="auth-name-group" style="display:none;"><label for="auth-name">पूरा नाम | Full Name</label><input type="text" id="auth-name" placeholder="Enter your full name"></div>
+                 <div class="form-group"><label for="auth-password">पासवर्ड | Password</label><input type="password" id="auth-password" placeholder="Enter your password" required></div>
+                 <button type="submit" class="btn" id="auth-submit-btn">लॉग इन करें | Log In</button>
+             </form>
+             <div class="auth-switch"><p id="authSwitchText">खाता नहीं है? <a onclick="showSignup()">साइन अप करें | Sign Up</a></p></div>
+        </div>
+
+        <div id="profile-view" class="view card">
+            <h2>प्रोफ़ाइल जानकारी | Profile Information</h2>
+            <div class="profile-info">
+                <p>यूजरनेम | Username: <span id="profile-username"></span></p>
+                <p>पूरा नाम | Full Name: <span id="profile-name"></span></p>
+            </div>
+            <button class="btn back-to-dashboard" onclick="switchView('dashboard-view')">
+                <i class="fas fa-arrow-left"></i> डैशबोर्ड पर लौटें | Back to Dashboard
+            </button>
+        </div>
+
+        <div id="dashboard-view" class="view">
+            <div class="summary-grid">
+                <div class="summary-card income" id="totalIncomeCard">
+                    <h3>कुल आय | Total Income</h3>
+                    <div class="amount" id="totalIncomeAmount">₹0.00</div>
+                </div>
+                <div class="summary-card expense" id="totalExpenseCard">
+                    <h3>कुल खर्च | Total Expenses</h3>
+                    <div class="amount" id="totalExpenseAmount">₹0.00</div>
+                </div>
+                <div class="summary-card balance" id="balanceCard">
+                    <h3>शेष | Balance</h3>
+                    <div class="amount" id="balanceAmount">₹0.00</div>
+                </div>
+            </div>
+
+            <div class="main-grid">
+                <div class="card">
+                    <div class="tab-container">
+                        <button class="tab active" id="form-tab-expense" onclick="showExpenseMode()">खर्च | Expense</button>
+                        <button class="tab" id="form-tab-income" onclick="showIncomeMode()">आय | Income</button>
+                    </div>
+                    
+                    <form id="transactionForm">
+                        <h2 id="formTitle">नया खर्च जोड़ें | Add New Expense</h2>
+                        <div class="form-group">
+                            <label for="title">शीर्षक | Title</label>
+                            <input type="text" id="title" placeholder="जैसे: राशन खरीदारी / Grocery Shopping" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="amount">राशि | Amount (₹)</label>
+                            <input type="number" id="amount" placeholder="0.00" step="0.01" min="0" required>
+                        </div>
+                        
+                        <div class="form-group" id="expense-category-group">
+                            <label for="category">श्रेणी | Category</label>
+                            <select id="category" required>
+                                <option value="food">भोजन और खाना | Food & Dining</option>
+                                <option value="transport">यातायात | Transport</option>
+                                <option value="entertainment">मनोरंजन | Entertainment</option>
+                                <option value="utilities">बिजली-पानी | Utilities</option>
+                                <option value="shopping">खरीदारी | Shopping</option>
+                                <option value="health">स्वास्थ्य | Health</option>
+                                <option value="education">शिक्षा | Education</option>
+                                <option value="rent">किराया | Rent/EMI</option>
+                                <option value="other">अन्य | Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group" id="income-category-group" style="display: none;">
+                            <label for="income-category">आय श्रेणी | Income Category</label>
+                            <select id="income-category" required>
+                                <option value="salary">वेतन | Salary</option>
+                                <option value="freelance">फ्रीलांस | Freelance</option>
+                                <option value="bonus">बोनस | Bonus</option>
+                                <option value="other">अन्य | Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="date">तारीख | Date</label>
+                            <input type="date" id="date" required>
+                        </div>
+                        <button type="submit" class="btn" id="submitBtn">जोड़ें | Add</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                     <div class="tab-container">
+                        <button class="tab active" id="chart-tab-expense" onclick="showListAndChart('expense')">खर्च चार्ट | Expense Chart</button>
+                        <button class="tab" id="chart-tab-income" onclick="showListAndChart('income')">आय चार्ट | Income Chart</button>
+                    </div>
+                    
+                    <div class="tab-content active" id="expense-chart-content">
+                        <h2>Expenses by Category</h2>
+                        <div class="chart-container" style="height:300px; position:relative;"><canvas id="expenseChart"></canvas></div>
+                    </div>
+                    
+                    <div class="tab-content" id="income-chart-content">
+                         <h2>Income by Category</h2>
+                        <div class="chart-container" style="height:300px; position:relative;"><canvas id="incomeChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                 <div class="tab-container">
+                    <button class="tab active" id="list-tab-expense" onclick="showListAndChart('expense')">हाल के खर्च | Recent Expenses</button>
+                    <button class="tab" id="list-tab-income" onclick="showListAndChart('income')">हाल की आय | Recent Income</button>
+                </div>
+                
+                <div class="filter-sort-bar">
+                    <label for="filterCategory">फ़िल्टर श्रेणी | Filter Category:</label>
+                    <select id="filterCategory" onchange="renderActiveList()">
+                        </select>
+                    
+                    <label for="sortBy">क्रमबद्ध करें | Sort By:</label>
+                    <select id="sortBy" onchange="renderActiveList()">
+                        <option value="date_desc">नवीनतम तारीख | Date (Newest)</option>
+                        <option value="date_asc">सबसे पुरानी तारीख | Date (Oldest)</option>
+                        <option value="amount_desc">राशि (उच्च से निम्न) | Amount (High to Low)</option>
+                        <option value="amount_asc">राशि (निम्न से उच्च) | Amount (Low to High)</option>
+                    </select>
+                </div>
+
+                <div class="tab-content active" id="expense-list-content">
+                    <div class="expense-list" id="expenseList"></div>
+                    <div class="list-actions">
+                        <button class="btn export-btn" onclick="exportExpensesToCSV()">
+                            <i class="fas fa-file-csv"></i> खर्चों को CSV में निर्यात करें | Export Expenses to CSV
+                        </button>
+                        <button class="btn clear-btn" onclick="clearAllExpenses()">
+                            <i class="fas fa-trash-alt"></i> सभी खर्च साफ़ करें | Clear All Expenses
+                        </button>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="income-list-content">
+                    <div class="expense-list" id="incomeList"></div>
+                    <div class="list-actions">
+                         <button class="btn clear-btn" onclick="clearAllIncomes()">
+                            <i class="fas fa-trash-alt"></i> सभी आय साफ़ करें | Clear All Income
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Global State and Storage Keys ---
+        let expenses = [];
+        let incomes = []; // --- Feature: Income ---
+        let editingId = null;
+        let editingMode = 'expense'; // 'expense' or 'income'
+        let currentFormMode = 'expense'; // 'expense' or 'income'
+        let currentListMode = 'expense'; // 'expense' or 'income'
+        
+        let expenseChart = null;
+        let incomeChart = null; // --- Feature: Income ---
+        
+        let currentUserId = null;
+        let isSignupMode = false;
+
+        const USER_STORAGE_KEY = 'trackerUsers';
+        const CURRENT_USER_KEY = 'trackerCurrentUser';
+        const EXPENSE_STORAGE_PREFIX = 'trackerExpenses_';
+        const INCOME_STORAGE_PREFIX = 'trackerIncomes_'; // --- Feature: Income ---
+        const THEME_STORAGE_KEY = 'trackerTheme'; // --- Feature: Theme ---
+
+        // --- Init Functions ---
+        document.addEventListener('DOMContentLoaded', function() {
+            setTodayDate();
+            initTheme(); // Load theme first
+            initAuth(); // Check for logged-in user
+        });
+
+        // --- Feature: Theme Toggle ---
+        function initTheme() {
+            const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+            const toggleBtnIcon = document.getElementById('themeToggleBtn').querySelector('i');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark');
+                toggleBtnIcon.classList.remove('fa-sun');
+                toggleBtnIcon.classList.add('fa-moon');
+            } else {
+                document.body.classList.remove('dark');
+                toggleBtnIcon.classList.remove('fa-moon');
+                toggleBtnIcon.classList.add('fa-sun');
+            }
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark');
+            const toggleBtnIcon = document.getElementById('themeToggleBtn').querySelector('i');
+            if (document.body.classList.contains('dark')) {
+                localStorage.setItem(THEME_STORAGE_KEY, 'dark');
+                toggleBtnIcon.classList.remove('fa-sun');
+                toggleBtnIcon.classList.add('fa-moon');
+            } else {
+                localStorage.setItem(THEME_STORAGE_KEY, 'light');
+                toggleBtnIcon.classList.remove('fa-moon');
+                toggleBtnIcon.classList.add('fa-sun');
+            }
+            
+            // --- FIX 2: Redraw the active chart to apply new theme colors ---
+            if (currentUserId) { // Only update if logged in and charts are visible
+                 updateActiveChart();
+            }
+        }
+        // --- End Theme ---
+
+        // --- View & Auth Functions ---
+        function switchView(viewId) {
+            document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            
+            if (viewId === 'dashboard-view') {
+                loadAllData(); // Load both incomes and expenses
+                updateSummary();
+                showListAndChart('expense'); // Default to expense view
+            }
+        }
+
+        function updateUIForAuth() {
+            const actionsContainer = document.getElementById('userActions');
+            const authButtons = actionsContainer.querySelectorAll('.auth-btn');
+            authButtons.forEach(btn => btn.remove()); // Clear old auth buttons
+
+            if (currentUserId) {
+                actionsContainer.insertAdjacentHTML('beforeend', `
+                    <button class="action-btn auth-btn" onclick="showProfile()" title="Profile"><i class="fas fa-user-circle"></i></button>
+                    <button class="action-btn auth-btn" onclick="logout()" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
+                `);
+                switchView('dashboard-view');
+            } else {
+                actionsContainer.insertAdjacentHTML('beforeend', `
+                    <button class="action-btn auth-btn" onclick="switchView('auth-view')" title="Login/Signup"><i class="fas fa-sign-in-alt"></i></button>
+                `);
+                switchView('auth-view');
+            }
+        }
+
+        function initAuth() {
+            currentUserId = localStorage.getItem(CURRENT_USER_KEY);
+            if (currentUserId) {
+                const users = JSON.parse(localStorage.getItem(USER_STORAGE_KEY) || '{}');
+                if (users[currentUserId]) {
+                    updateUIForAuth();
+                    loadProfileData(users[currentUserId]);
+                    return;
+                } else {
+                    logout(false);
+                }
+            }
+            updateUIForAuth();
+        }
+        
+        // This function correctly switches the form to Sign Up mode
+        function showSignup() {
+            isSignupMode = true;
+            document.getElementById('authTitle').textContent = 'साइन अप करें | Sign Up';
+            document.getElementById('auth-submit-btn').textContent = 'साइन अप करें | Sign Up';
+            document.getElementById('authSwitchText').innerHTML = 'खाता पहले से है? <a onclick="showLogin()">लॉग इन करें | Log In</a>';
+            document.getElementById('auth-name-group').style.display = 'block';
+            document.getElementById('authForm').reset();
+        }
+        
+        // This function correctly switches the form to Log In mode
+        function showLogin() {
+            isSignupMode = false;
+            document.getElementById('authTitle').textContent = 'लॉग इन करें | Log In';
+            document.getElementById('auth-submit-btn').textContent = 'लॉग इन करें | Log In';
+            document.getElementById('authSwitchText').innerHTML = 'खाता नहीं है? <a onclick="showSignup()">साइन अप करें | Sign Up</a>';
+            document.getElementById('auth-name-group').style.display = 'none';
+            document.getElementById('authForm').reset();
+        }
+        
+        // This handler correctly uses the 'isSignupMode' boolean
+        document.getElementById('authForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('auth-username').value.trim();
+            const password = document.getElementById('auth-password').value.trim();
+            const name = document.getElementById('auth-name').value.trim();
+            let users = JSON.parse(localStorage.getItem(USER_STORAGE_KEY) || '{}');
+
+            if (isSignupMode) { // Handles Sign Up
+                if (Object.keys(users).includes(username)) { alert('यह यूजरनेम पहले से मौजूद है। / Username already exists.'); return; }
+                if (!name) { alert('कृपया अपना पूरा नाम दर्ज करें। / Please enter your full name.'); return; }
+                users[username] = { id: username, name: name || username, password: password }; // Insecure, for demo only
+                localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(users));
+                alert('साइन अप सफल! कृपया लॉग इन करें। / Sign Up successful! Please log in.');
+                showLogin();
+            } else { // Handles Log In
+                if (users[username] && users[username].password === password) {
+                    currentUserId = username;
+                    localStorage.setItem(CURRENT_USER_KEY, currentUserId);
+                    loadProfileData(users[username]);
+                    updateUIForAuth();
+                    alert('लॉग इन सफल! / Login successful!');
+                } else {
+                    alert('गलत यूजरनेम या पासवर्ड। / Invalid username or password.');
+                }
+            }
+        });
+
+        function logout(doAlert = true) {
+            currentUserId = null;
+            localStorage.removeItem(CURRENT_USER_KEY);
+            expenses = [];
+            incomes = []; // Clear income data on logout
+            if (doAlert) alert('आप लॉग आउट हो गए हैं। / You have been logged out.');
+            updateUIForAuth();
+            showLogin();
+        }
+
+        function showProfile() {
+            const users = JSON.parse(localStorage.getItem(USER_STORAGE_KEY) || '{}');
+            const user = users[currentUserId];
+            if (user) { loadProfileData(user); switchView('profile-view'); }
+        }
+
+        function loadProfileData(user) {
+            document.getElementById('profile-username').textContent = user.id;
+            document.getElementById('profile-name').textContent = user.name;
+        }
+
+        // --- Data Functions (User-Specific) ---
+        function loadAllData() {
+            loadExpenses();
+            loadIncomes();
+        }
+        
+        function loadExpenses() {
+            if (!currentUserId) { expenses = []; return; }
+            const storedExpenses = localStorage.getItem(EXPENSE_STORAGE_PREFIX + currentUserId);
+            expenses = storedExpenses ? JSON.parse(storedExpenses) : [];
+        }
+        function saveExpenses() {
+            if (currentUserId) { localStorage.setItem(EXPENSE_STORAGE_PREFIX + currentUserId, JSON.stringify(expenses)); }
+        }
+        
+        // --- Feature: Income Data Functions ---
+        function loadIncomes() {
+            if (!currentUserId) { incomes = []; return; }
+            const storedIncomes = localStorage.getItem(INCOME_STORAGE_PREFIX + currentUserId);
+            incomes = storedIncomes ? JSON.parse(storedIncomes) : [];
+        }
+        function saveIncomes() {
+            if (currentUserId) { localStorage.setItem(INCOME_STORAGE_PREFIX + currentUserId, JSON.stringify(incomes)); }
+        }
+        // --- End Income Data ---
+
+        // --- Feature: UI Toggle Functions (Tabs) ---
+        // Switch the ADD form
+        function showExpenseMode() {
+            currentFormMode = 'expense';
+            document.getElementById('formTitle').textContent = 'नया खर्च जोड़ें | Add New Expense';
+            document.getElementById('form-tab-expense').classList.add('active');
+            document.getElementById('form-tab-income').classList.remove('active');
+            document.getElementById('expense-category-group').style.display = 'block';
+            document.getElementById('income-category-group').style.display = 'none';
+            document.getElementById('submitBtn').textContent = 'खर्च जोड़ें | Add Expense';
+        }
+
+        function showIncomeMode() {
+            currentFormMode = 'income';
+            document.getElementById('formTitle').textContent = 'नई आय जोड़ें | Add New Income';
+            document.getElementById('form-tab-income').classList.add('active');
+            document.getElementById('form-tab-expense').classList.remove('active');
+            document.getElementById('income-category-group').style.display = 'block';
+            document.getElementById('expense-category-group').style.display = 'none';
+            document.getElementById('submitBtn').textContent = 'आय जोड़ें | Add Income';
+        }
+        
+        // Switch the LIST and CHART tabs simultaneously
+        function showListAndChart(mode) { // 'expense' or 'income'
+            currentListMode = mode;
+            
+            // List tabs
+            document.getElementById('list-tab-expense').classList.toggle('active', mode === 'expense');
+            document.getElementById('list-tab-income').classList.toggle('active', mode === 'income');
+            document.getElementById('expense-list-content').classList.toggle('active', mode === 'expense');
+            document.getElementById('income-list-content').classList.toggle('active', mode === 'income');
+            
+            // Chart tabs
+            document.getElementById('chart-tab-expense').classList.toggle('active', mode === 'expense');
+            document.getElementById('chart-tab-income').classList.toggle('active', mode === 'income');
+            document.getElementById('expense-chart-content').classList.toggle('active', mode === 'expense');
+            document.getElementById('income-chart-content').classList.toggle('active', mode === 'income');
+            
+            populateFilterOptions();
+            renderActiveList();
+            updateActiveChart();
+        }
+
+        function populateFilterOptions() {
+            const filterSelect = document.getElementById('filterCategory');
+            filterSelect.innerHTML = '<option value="all">सभी श्रेणियाँ | All Categories</option>';
+            if (currentListMode === 'expense') {
+                filterSelect.innerHTML += `
+                    <option value="food">भोजन | Food</option>
+                    <option value="transport">यातायात | Transport</option>
+                    <option value="entertainment">मनोरंजन | Entertainment</option>
+                    <option value="utilities">बिजली-पानी | Utilities</option>
+                    <option value="shopping">खरीदारी | Shopping</option>
+                    <option value="health">स्वास्थ्य | Health</option>
+                    <option value="education">शिक्षा | Education</option>
+                    <option value="rent">किराया | Rent/EMI</option>
+                    <option value="other">अन्य | Other</option>
+                `;
+            } else {
+                filterSelect.innerHTML += `
+                    <option value="salary">वेतन | Salary</option>
+                    <option value="freelance">फ्रीलांस | Freelance</option>
+                    <option value="bonus">बोनस | Bonus</option>
+                    <option value="other">अन्य | Other</option>
+                `;
+            }
+        }
+        // --- End UI Toggles ---
+        
+        // --- Core Logic ---
+        function setTodayDate() {
+            document.getElementById('date').value = new Date().toISOString().split('T')[0];
+        }
+
+        document.getElementById('transactionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (!currentUserId) return alert('Please log in to add transactions.');
+            
+            const title = document.getElementById('title').value.trim();
+            const amount = parseFloat(document.getElementById('amount').value);
+            const date = document.getElementById('date').value;
+
+            if (title === '' || isNaN(amount) || amount <= 0 || date === '') {
+                alert('कृपया वैध शीर्षक, राशि और तारीख दर्ज करें। / Please enter a valid title, amount, and date.');
+                return;
+            }
+
+            if (editingId !== null) {
+                // Update existing item
+                if (editingMode === 'expense') {
+                    const category = document.getElementById('category').value;
+                    const index = expenses.findIndex(exp => exp.id === editingId);
+                    expenses[index] = { id: editingId, title, amount, category, date };
+                    saveExpenses();
+                } else {
+                    const category = document.getElementById('income-category').value;
+                    const index = incomes.findIndex(inc => inc.id === editingId);
+                    incomes[index] = { id: editingId, title, amount, category, date };
+                    saveIncomes();
+                }
+                editingId = null;
+            } else {
+                // Add new item
+                if (currentFormMode === 'expense') {
+                    const category = document.getElementById('category').value;
+                    const expense = { id: Date.now(), title, amount, category, date };
+                    expenses.push(expense);
+                    saveExpenses();
+                } else {
+                    const category = document.getElementById('income-category').value;
+                    const income = { id: Date.now(), title, amount, category, date };
+                    incomes.push(income);
+                    saveIncomes();
+                }
+            }
+            
+            resetForm();
+            updateSummary();
+            renderActiveList();
+            updateActiveChart();
+        });
+
+        function resetForm() {
+            document.getElementById('transactionForm').reset();
+            setTodayDate();
+            editingId = null;
+            document.getElementById('submitBtn').textContent = (currentFormMode === 'expense') ? 'खर्च जोड़ें | Add Expense' : 'आय जोड़ें | Add Income';
+            if (currentFormMode === 'expense') showExpenseMode();
+            else showIncomeMode();
+        }
+
+        // --- Feature: Summary (Income/Balance) ---
+        function updateSummary() {
+            const totalExp = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+            const totalInc = incomes.reduce((sum, inc) => sum + inc.amount, 0);
+            const balance = totalInc - totalExp;
+
+            document.getElementById('totalExpenseAmount').textContent = `₹${formatIndianNumber(totalExp)}`;
+            document.getElementById('totalIncomeAmount').textContent = `₹${formatIndianNumber(totalInc)}`;
+            document.getElementById('balanceAmount').textContent = `₹${formatIndianNumber(balance)}`;
+            
+            const balanceCard = document.getElementById('balanceCard');
+            if (balance < 0) {
+                balanceCard.classList.add('negative');
+            } else {
+                balanceCard.classList.remove('negative');
+            }
+        }
+        // --- End Summary ---
+
+        function renderActiveList() {
+            if (currentListMode === 'expense') renderExpenses();
+            else renderIncomes();
+        }
+
+        function renderExpenses() {
+            const listContainer = document.getElementById('expenseList');
+            const filtered = getFilteredAndSortedData(expenses);
+
+            if (filtered.length === 0) {
+                listContainer.innerHTML = `<div class="empty-state"><p>No expenses yet.</p></div>`;
+                return;
+            }
+            listContainer.innerHTML = filtered.map(expense => `
+                <div class="expense-item">
+                    <div class="expense-info">
+                        <div class="expense-title">${expense.title}
+                            <span class="category-badge category-${expense.category}">${getCategoryName(expense.category, 'expense')}</span>
+                        </div>
+                        <div class="expense-details">${formatDate(expense.date)}</div>
+                    </div>
+                    <div class="expense-amount">₹${formatIndianNumber(expense.amount)}</div>
+                    <div class="expense-actions">
+                        <button class="icon-btn edit-btn" onclick="editExpense(${expense.id})" title="Edit"><i class="fas fa-edit"></i></button>
+                        <button class="icon-btn delete-btn" onclick="deleteExpense(${expense.id})" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // --- Feature: Income List ---
+        function renderIncomes() {
+            const listContainer = document.getElementById('incomeList');
+            const filtered = getFilteredAndSortedData(incomes);
+
+            if (filtered.length === 0) {
+                listContainer.innerHTML = `<div class="empty-state"><p>No income yet.</p></div>`;
+                return;
+            }
+            listContainer.innerHTML = filtered.map(income => `
+                <div class="expense-item income-item">
+                    <div class="expense-info">
+                        <div class="expense-title">${income.title}
+                            <span class="category-badge category-${income.category}">${getCategoryName(income.category, 'income')}</span>
+                        </div>
+                        <div class="expense-details">${formatDate(income.date)}</div>
+                    </div>
+                    <div class="income-amount">₹${formatIndianNumber(income.amount)}</div>
+                    <div class="expense-actions">
+                        <button class="icon-btn edit-btn" onclick="editIncome(${income.id})" title="Edit"><i class="fas fa-edit"></i></button>
+                        <button class="icon-btn delete-btn" onclick="deleteIncome(${income.id})" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        // --- End Income List ---
+
+        function getFilteredAndSortedData(data) {
+            const filterCategory = document.getElementById('filterCategory').value;
+            const sortBy = document.getElementById('sortBy').value;
+
+            const filtered = data.filter(item => filterCategory === 'all' || item.category === filterCategory);
+            return [...filtered].sort((a, b) => {
+                switch (sortBy) {
+                    case 'date_desc': return new Date(b.date) - new Date(a.date);
+                    case 'date_asc': return new Date(a.date) - new Date(b.date);
+                    case 'amount_desc': return b.amount - a.amount;
+                    case 'amount_asc': return a.amount - b.amount;
+                    default: return 0;
+                }
+            });
+        }
+        
+        // Expense Actions
+        function editExpense(id) {
+            const expense = expenses.find(exp => exp.id === id);
+            if (!expense) return;
+            showExpenseMode();
+            document.getElementById('title').value = expense.title;
+            document.getElementById('amount').value = expense.amount;
+            document.getElementById('category').value = expense.category;
+            document.getElementById('date').value = expense.date;
+            editingId = id;
+            editingMode = 'expense';
+            document.getElementById('submitBtn').textContent = 'खर्च अपडेट करें | Update Expense';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        function deleteExpense(id) {
+            if (confirm('क्या आप वाकई इस खर्च को हटाना चाहते हैं? / Are you sure you want to delete this expense?')) {
+                expenses = expenses.filter(exp => exp.id !== id);
+                saveExpenses();
+                updateSummary();
+                renderExpenses();
+                updateExpenseChart();
+            }
+        }
+        function clearAllExpenses() {
+            if (confirm('WARNING! Are you sure you want to delete ALL expenses?')) {
+                expenses = [];
+                saveExpenses();
+                updateSummary();
+                renderExpenses();
+                updateExpenseChart();
+            }
+        }
+
+        // --- Feature: Income Actions ---
+        function editIncome(id) {
+            const income = incomes.find(inc => inc.id === id);
+            if (!income) return;
+            showIncomeMode();
+            document.getElementById('title').value = income.title;
+            document.getElementById('amount').value = income.amount;
+            document.getElementById('income-category').value = income.category;
+            document.getElementById('date').value = income.date;
+            editingId = id;
+            editingMode = 'income';
+            document.getElementById('submitBtn').textContent = 'आय अपडेट करें | Update Income';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        function deleteIncome(id) {
+            if (confirm('क्या आप वाकई इस आय को हटाना चाहते हैं? / Are you sure you want to delete this income?')) {
+                incomes = incomes.filter(inc => inc.id !== id);
+                saveIncomes();
+                updateSummary();
+                renderIncomes();
+                updateIncomeChart();
+            }
+        }
+        function clearAllIncomes() {
+             if (confirm('WARNING! Are you sure you want to delete ALL income?')) {
+                incomes = [];
+                saveIncomes();
+                updateSummary();
+                renderIncomes();
+                updateIncomeChart();
+            }
+        }
+        // --- End Income Actions ---
+        
+        function updateActiveChart() {
+            if (currentListMode === 'expense') updateExpenseChart();
+            else updateIncomeChart();
+        }
+        
+        // Chart Logic
+        function updateExpenseChart() {
+            const ctx = document.getElementById('expenseChart').getContext('2d');
+            const categoryTotals = expenses.reduce((acc, exp) => {
+                acc[exp.category] = (acc[exp.category] || 0) + exp.amount;
+                return acc;
+            }, {});
+            const labels = Object.keys(categoryTotals).map(cat => getCategoryName(cat, 'expense'));
+            const data = Object.values(categoryTotals);
+            const colors = Object.keys(categoryTotals).map(cat => getCategoryColor(cat, 'expense'));
+            
+            if (expenseChart) expenseChart.destroy();
+            if (data.length === 0) { ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); return; }
+            expenseChart = createChart(ctx, labels, data, colors);
+        }
+        
+        // --- Feature: Income Chart ---
+        function updateIncomeChart() {
+            const ctx = document.getElementById('incomeChart').getContext('2d');
+            const categoryTotals = incomes.reduce((acc, inc) => {
+                acc[inc.category] = (acc[inc.category] || 0) + inc.amount;
+                return acc;
+            }, {});
+            const labels = Object.keys(categoryTotals).map(cat => getCategoryName(cat, 'income'));
+            const data = Object.values(categoryTotals);
+            const colors = Object.keys(categoryTotals).map(cat => getCategoryColor(cat, 'income'));
+
+            if (incomeChart) incomeChart.destroy();
+            if (data.length === 0) { ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); return; }
+            incomeChart = createChart(ctx, labels, data, colors);
+        }
+        // --- End Income Chart ---
+        
+        // --- FIX 1: This function now gets theme colors from CSS ---
+        function createChart(ctx, labels, data, colors) {
+            // Get the computed color values from the CSS variables
+            const chartBorderColor = getComputedStyle(document.body).getPropertyValue('--card-bg').trim();
+            const chartLabelColor = getComputedStyle(document.body).getPropertyValue('--text-color').trim();
+
+             return new Chart(ctx, {
+                type: 'doughnut',
+                data: { 
+                    labels: labels, 
+                    datasets: [{ 
+                        data: data, 
+                        backgroundColor: colors, 
+                        borderWidth: 2, 
+                        borderColor: chartBorderColor // Use the JS variable
+                    }] 
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            position: 'bottom', 
+                            labels: { 
+                                padding: 15, 
+                                font: { size: 12 }, 
+                                color: chartLabelColor // Use the JS variable
+                            } 
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                    return `${label}: ₹${formatIndianNumber(value)} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // --- Feature: Export to CSV ---
+        function exportExpensesToCSV() {
+            if (expenses.length === 0) {
+                alert("निर्यात करने के लिए कोई खर्च नहीं है। / No expenses to export.");
+                return;
+            }
+
+            const headers = "ID,Title,Amount (₹),Category,Date";
+            const csvRows = [headers];
+
+            const dataToExport = getFilteredAndSortedData(expenses); // Export filtered/sorted data
+
+            for (const expense of dataToExport) {
+                const title = `"${expense.title.replace(/"/g, '""')}"`; // Handle commas in title
+                const category = getCategoryName(expense.category, 'expense');
+                const row = [expense.id, title, expense.amount, category, expense.date].join(',');
+                csvRows.push(row);
+            }
+
+            const csvContent = csvRows.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `user_${currentUserId}_expenses.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+        // --- End Export ---
+
+        // --- Helper Functions ---
+        function formatIndianNumber(num) {
+            const fixedNum = num.toFixed(2);
+            const [integer, decimal] = fixedNum.split('.');
+            let lastThree = integer.substring(integer.length - 3);
+            const otherNumbers = integer.substring(0, integer.length - 3);
+            if (otherNumbers !== '') { lastThree = ',' + lastThree; }
+            const formatted = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree;
+            return decimal ? formatted + '.' + decimal : formatted;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString.replace(/-/g, '/'));
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return date.toLocaleDateString('en-IN', options);
+        }
+
+        function getCategoryName(category, type) {
+            const names = {
+                expense: { food: 'भोजन | Food', transport: 'यातायात | Transport', entertainment: 'मनोरंजन | Entertainment', utilities: 'बिजली-पानी | Utilities', shopping: 'खरीदारी | Shopping', health: 'स्वास्थ्य | Health', education: 'शिक्षा | Education', rent: 'किराया | Rent/EMI', other: 'अन्य | Other' },
+                income: { salary: 'वेतन | Salary', freelance: 'फ्रीलांस | Freelance', bonus: 'बोनस | Bonus', other: 'अन्य | Other' }
+            };
+            return names[type] ? (names[type][category] || category) : category;
+        }
+
+        function getCategoryColor(category, type) {
+            const colors = {
+                expense: { food: '#ff9800', transport: '#2196f3', entertainment: '#9c27b0', utilities: '#4caf50', shopping: '#e91e63', health: '#f44336', education: '#00bcd4', rent: '#ff5722', other: '#757575' },
+                income: { salary: '#81c784', freelance: '#4dd0e1', bonus: '#fff176', other: '#bdbdbd' }
+            };
+             return colors[type] ? (colors[type][category] || '#999') : '#999';
+        }
+    </script>
+</body>
+</html>
